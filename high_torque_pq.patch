@@ -4,11 +4,12 @@
        self.LDW_STEP = 5                   # LDW_1 message frequency 20Hz
        self.ACC_HUD_STEP = 4               # ACC_GRA_Anzeige frequency 25Hz
        self.STEER_DRIVER_ALLOWANCE = 80    # Driver intervention threshold 0.8 Nm
--      self.STEER_DELTA_UP = 10            # Max HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
--      self.STEER_DELTA_DOWN = 10          # Min HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
-+      self.STEER_MAX = 400                # High torque PQ support (4.00 Nm)
-+      self.STEER_DELTA_UP = 10            # Max HCA reached in 0.80s (400 / (50Hz * 0.80))
-+      self.STEER_DELTA_DOWN = 10          # Min HCA reached in 0.80s (400 / (50Hz * 0.80))
+-      self.STEER_MAX = 400                # High torque PQ support (4.00 Nm)
+-      self.STEER_DELTA_UP = 10            # Max HCA reached in 0.80s (400 / (50Hz * 0.80))
+-      self.STEER_DELTA_DOWN = 10          # Min HCA reached in 0.80s (400 / (50Hz * 0.80))
++      self.STEER_MAX = 350                # High torque PQ support (3.50 Nm)
++      self.STEER_DELTA_UP = 10            # Max HCA reached in 0.70s (350 / (50Hz * 0.70))
++      self.STEER_DELTA_DOWN = 10          # Min HCA reached in 0.70s (350 / (50Hz * 0.70))
  
        if CP.transmissionType == TransmissionType.automatic:
          self.shifter_values = can_define.dv["Getriebe_1"]["GE1_Wahl_Pos"]
@@ -18,13 +19,13 @@
  static bool volkswagen_pq_tx_hook(const CANPacket_t *msg) {
    // lateral limits
    const TorqueSteeringLimits VOLKSWAGEN_PQ_STEERING_LIMITS = {
--    .max_torque = 300,               // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
--    .max_rt_delta = 113,             // 6 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 75 ; 125 * 1.5 for safety pad = 113
--    .max_rate_up = 6,                // 3.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
--    .max_rate_down = 10,             // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-+    .max_torque = 400,               // 4.0 Nm (EPS side max of 4.0Nm before fault on most racks)
-+    .max_rt_delta = 150,             // 8 max rate up * 50Hz send rate * 250000 RT interval / 1000000 * 1.5 pad = 150
-+    .max_rate_up = 8,                // 4.0 Nm/s RoC limit
+-    .max_torque = 400,               // 4.0 Nm (EPS side max of 4.0Nm before fault on most racks)
+-    .max_rt_delta = 150,             // 8 max rate up * 50Hz send rate * 250000 RT interval / 1000000 * 1.5 pad = 150
+-    .max_rate_up = 8,                // 4.0 Nm/s RoC limit
+-    .max_rate_down = 10,             // 5.0 Nm/s RoC limit
++    .max_torque = 350,               // 3.5 Nm (EPS side max of 3.5Nm safer for sensitive racks)
++    .max_rt_delta = 131,             // 7 max rate up * 50Hz send rate * 250000 RT interval / 1000000 * 1.5 pad = 131
++    .max_rate_up = 7,                // 3.5 Nm/s RoC limit
 +    .max_rate_down = 10,             // 5.0 Nm/s RoC limit
      .driver_torque_multiplier = 3,
      .driver_torque_allowance = 80,
