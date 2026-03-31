@@ -1,0 +1,75 @@
+--- opendbc_repo/opendbc/car/volkswagen/pqcan.py
++++ opendbc_repo/opendbc/car/volkswagen/pqcan.py
+@@ -106,7 +106,14 @@
+ 
+ 
+ def create_acc_hud_control(packer, bus, acc_hud_status, set_speed, leadDistance, distanceBars, fcw_alert, leadVisible):
+-  if distanceBars == 1:
+-    leadDistanceBars = 2
+-  elif distanceBars == 2:
+-    leadDistanceBars = 3
+-  elif distanceBars == 3:
+-    leadDistanceBars = 4
+-  else:
+-    leadDistanceBars = 2
++  leadDistanceBars = (distanceBars + 1) if 1 <= distanceBars <= 3 else 2
+   values = {
+     "ACA_StaACC": acc_hud_status,
+     "ACA_Zeitluecke": leadDistanceBars,
+--- opendbc_repo/opendbc/car/volkswagen/carcontroller.py
++++ opendbc_repo/opendbc/car/volkswagen/carcontroller.py
+@@ -55,11 +55,10 @@
+     self.hca_frame_same_torque = 0
+     self.accel_last = 0
+     self.accel_diff = 0
+-    self.long_deviation = 0
+-    self.long_jerklimit = 0
++    self.long_deviation = 0.02
++    self.long_jerklimit = 0.7
+     self.HCA_Status = 3
+-    self.leadDistanceBars = 0
++    self.leadDistanceBars = 2
++    self.pqhca5or7Toggle = self._params.get_bool("pqhca5or7Toggle") if CP.flags & VolkswagenFlags.PQ else False
+     self.lead_distance_bars_last = None
+     self.distance_bar_frame = 0
+     self.speed_limit_last = 0
+@@ -126,10 +126,9 @@
+           new_torque = int(round(actuators.torque * self.CCP.STEER_MAX))
+           apply_torque = apply_driver_steer_torque_limits(new_torque, self.apply_torque_last, CS.out.steeringTorque, self.CCP)
+           self.hca_frame_timer_running += self.CCP.STEER_STEP
+-          if self.apply_torque_last == apply_torque:
++          if self.apply_torque_last == apply_torque and abs(apply_torque) > self.CCP.STEER_LOW_TORQUE:
+             self.hca_frame_same_torque += self.CCP.STEER_STEP
+             if self.hca_frame_same_torque > self.CCP.STEER_TIME_STUCK_TORQUE / DT_CTRL:
++              # Smoothly oscillate the torque to reset the EPS stuck timer without being felt by the driver
+               apply_torque -= (1, -1)[apply_torque < 0]
+               self.hca_frame_same_torque = 0
+           else:
+@@ -159,10 +159,7 @@
+             apply_torque = 0
+ 
+         if hca_enabled and abs(apply_torque) > 0:
+-          self.HCA_Status = 5
++          if self.pqhca5or7Toggle and (self.CP.flags & (VolkswagenFlags.PQ | VolkswagenFlags.MLB)):
++            self.HCA_Status = 7
++          else:
++            self.HCA_Status = 5
+         else:
+           self.HCA_Status = 3
+ 
+@@ -225,12 +225,10 @@
+       else:
+         acc_control = self.CCS.acc_control_value(CS.out.cruiseState.available, CC.longActive, CC.cruiseControl.override, CS.out.accFaulted)
+         accel = float(np.clip(actuators.accel, self.CCP.ACCEL_MIN, self.CCP.ACCEL_MAX) if CC.longActive else 0)
+-        starting = actuators.longControlState == LongCtrlState.pid and (CS.esp_hold_confirmation or CS.out.vEgo < self.CP.vEgoStopping)
+-        self.accel_diff = (0.0019 * (accel - self.accel_last)) + (1 - 0.0019) * self.accel_diff
+-        self.long_jerklimit = (0.01 * (np.clip(abs(accel), 0.7, 2))) + (1 - 0.01) * self.long_jerklimit
+-        self.long_deviation = np.interp(abs(accel - self.accel_diff), [0, 0.3, 1.0], [0.02, 0.04, 0.08])
++        # Smooth out longitudinal control for PQ platform. Filter constants tuned for better comfort.
++        lpf_accel = np.interp(CS.out.vEgo, [0, 10, 20], [0.005, 0.003, 0.0015])
++        lpf_jerk = np.interp(CS.out.vEgo, [0, 10, 20], [0.1, 0.05, 0.01])
++        self.accel_diff = (lpf_accel * (accel - self.accel_last)) + (1 - lpf_accel) * self.accel_diff
++        self.long_jerklimit = (lpf_jerk * (np.clip(abs(accel), 0.7, 2))) + (1 - lpf_jerk) * self.long_jerklimit
++        self.long_deviation = np.interp(abs(accel - self.accel_diff), [0, 0.3, 1.0], [0.02, 0.035, 0.075])
+         self.accel_last = accel
+         can_sends.extend(self.CCS.create_acc_accel_control(self.packer_pt, self.CAN.pt, CS.acc_type, accel, acc_control, stopping, starting, CS.esp_hold_confirmation, self.long_deviation, self.long_jerklimit))

@@ -1,0 +1,187 @@
+--- selfdrive/monitoring/dmonitoringd.py
++++ selfdrive/monitoring/dmonitoringd.py
+@@ -15,10 +15,12 @@
+                             'carControl'], poll='driverStateV2')
+ 
+   DM = DriverMonitoring(rhd_saved=params.get_bool("IsRhdDetected"), always_on=params.get_bool("AlwaysOnDM"))
++  elon_mode = False
+   demo_mode = False
+ 
+   # 20Hz <- dmonitoringmodeld
+   while True:
+@@ -27,7 +29,9 @@
+       # iterate when model has new output
+       continue
+ 
+-    if demo_mode and sm.valid['driverStateV2']:
++    if elon_mode:
++      DM._reset_awareness()
++    elif demo_mode and sm.valid['driverStateV2']:
+       DM.run_step(sm, demo=demo_mode)
+     elif sm.all_checks():
+       DM.run_step(sm, demo=demo_mode)
+@@ -40,6 +44,12 @@
+     if sm['driverStateV2'].frameId % 40 == 1:
+       DM.always_on = params.get_bool("AlwaysOnDM")
+       demo_mode = params.get_bool("IsDriverViewEnabled")
++      try:
++        with open("/data/params/d/ElonMode", "r") as f:
++          elon_mode = f.read().strip() == "1"
++      except Exception:
++        elon_mode = False
++
+ 
+     # save rhd virtual toggle every 5 mins
+     if (sm['driverStateV2'].frameId % 6000 == 0 and not demo_mode and
+--- selfdrive/ui/iqpilot/ui_state.py
++++ selfdrive/ui/iqpilot/ui_state.py
+@@ -113,8 +113,24 @@
+ 
+     return "disengaged"
+ 
++  def get_bool_file(self, path) -> bool:
++    try:
++      with open(path, "r") as f:
++        return f.read().strip() == "1"
++    except Exception:
++      return False
++
++  def put_bool_file(self, path, value: bool) -> None:
++    try:
++      with open(path, "w") as f:
++        f.write("1" if value else "0")
++    except Exception:
++      pass
++
+   def update_params(self) -> None:
+     CP_IQ_bytes = self.params.get("IQCarParamsPersistent")
++    self.performance_mode = self.params.get_bool("PerformanceMode")
++    self.elon_mode = self.get_bool_file("/data/params/d/ElonMode")
+     if CP_IQ_bytes is not None:
+       self.CP_IQ = messaging.log_from_bytes(CP_IQ_bytes, custom.IQCarParams)
+     self.active_bundle = self.params.get("ModelManager_ActiveBundle")
+--- selfdrive/ui/layouts/settings/toggles.py
++++ selfdrive/ui/layouts/settings/toggles.py
+@@ -38,7 +38,9 @@
+     "without a turn signal activated while driving over 31 mph (50 km/h)."
+   ),
+   "AlwaysOnDM": tr_noop("Enable driver monitoring even when IQ.Pilot is not engaged."),
++  "PerformanceMode": tr_noop("Reduce system overhead by disabling non-critical background services and prioritizing real-time threads."),
+   'RecordFront': tr_noop("Upload data from the driver facing camera and help improve the driver monitoring algorithm."),
++  "ElonMode": tr_noop("Bypass driver monitoring awareness checks."),
+   "IsMetric": tr_noop("Display speed in km/h instead of mph."),
+   "RecordAudio": tr_noop("Record and store microphone audio while driving. The audio will be included in the dashcam video in Konn3kt."),
+   "LongitudinalControlMode": tr_noop(
+@@ -58,6 +60,9 @@
+     # Keep IQ.Pilot enabled by default; the UI no longer exposes this toggle.
+     self._params.put_bool("OpenpilotEnabledToggle", True)
+ 
++    # Set defaults for new modes
++    if self._params.get("AlphaLongitudinalEnabled") is None:
++        self._apply_longitudinal_control_mode(1) # IQ.Standard
++
+     # param, title, desc, icon, needs_restart
+     self._toggle_defs = {
+       "DisengageOnAccelerator": (
+@@ -73,6 +78,12 @@
+         "warning.png",
+         False,
+       ),
++      "PerformanceMode": (
++        lambda: tr("Performance Mode"),
++        DESCRIPTIONS["PerformanceMode"],
++        "speed_limit.png",
++        True,
++      ),
+       "RecordFront": (
+         lambda: tr("Record and Upload Driver Camera"),
+         DESCRIPTIONS["RecordFront"],
+@@ -91,6 +102,12 @@
+         "metric.png",
+         False,
+       ),
++      "ElonMode": (
++        lambda: tr("Elon Mode"),
++        DESCRIPTIONS["ElonMode"],
++        "monitoring.png",
++        False,
++      ),
+     }
+ 
+     self._long_personality_setting = multiple_button_item(
+@@ -144,6 +161,10 @@
+         callback=lambda state, p=param: self._toggle_callback(state, p),
+         icon=icon,
+       )
++
++      if param == "ElonMode":
++        toggle.action_item.set_state(ui_state.elon_mode)
++
+       try:
+         locked = self._params.get_bool(param + "Lock")
+       except UnknownKeyName:
+@@ -292,8 +313,12 @@
+       self._params.put_bool("OnroadCycleRequested", True)
+ 
+   def _toggle_callback(self, state: bool, param: str):
+-    self._params.put_bool(param, state)
++    if param == "ElonMode":
++      ui_state.put_bool_file("/data/params/d/ElonMode", state)
++      ui_state.elon_mode = state
++    else:
++      self._params.put_bool(param, state)
+     if self._toggle_defs[param][3]:
+       self._params.put_bool("OnroadCycleRequested", True)
+--- selfdrive/ui/widgets/prime.py
++++ selfdrive/ui/widgets/prime.py
+@@ -35,7 +35,10 @@
+-    last_ping = ui_state.sm['deviceState'].lastAthenaPingTime
+-    return last_ping != 0 and (time.monotonic_ns() - last_ping) < self.KONN3KT_ONLINE_NS
++    last_ping = ui_state.sm['deviceState'].lastAthenaPingTime
++    # Konn3kt pings are Unix timestamps, compare with wall-clock time
++    now_ns = time.time() * 1e9
++    return last_ping != 0 and (now_ns - last_ping) < self.KONN3KT_ONLINE_NS
+ 
+   def _render_for_unpaired_users(self, rect: rl.Rectangle):
+--- system/manager/process_config.py
++++ system/manager/process_config.py
+@@ -23,8 +23,12 @@
+ 
+ def logging(started: bool, params: Params, CP: car.CarParams) -> bool:
+-  run = (not CP.notCar) or not params.get_bool("DisableLogging")
+-  return started and run
++  run = (not CP.notCar) or not params.get_bool("DisableLogging")
++  return started and run and not params.get_bool("PerformanceMode")
++
++def not_perf(started: bool, params: Params, CP: car.CarParams) -> bool:
++  return not params.get_bool("PerformanceMode")
+ 
+ def ublox_available() -> bool:
+@@ -102,1 +106,1 @@
+-  PythonProcess("proclogd", "system.proclogd", only_onroad, enabled=platform.system() != "Darwin"),
++  PythonProcess("proclogd", "system.proclogd", and_(only_onroad, not_perf), enabled=platform.system() != "Darwin"),
+@@ -133,1 +137,1 @@
+-  PythonProcess("tombstoned", "system.tombstoned", always_run, enabled=not PC),
++  PythonProcess("tombstoned", "system.tombstoned", and_(always_run, not_perf), enabled=not PC),
+@@ -136,1 +140,1 @@
+-  PythonProcess("statsd", "system.statsd", always_run),
++  PythonProcess("statsd", "system.statsd", and_(always_run, not_perf)),
+--- launch_chffrplus.sh
++++ launch_chffrplus.sh
+@@ -18,6 +18,18 @@
+-
++  # Ensure data roaming and tethering tweaks are set on startup
++  sudo settings put global data_roaming 1
++  sudo settings put global tether_dun_required 0
++  sudo settings put global network_metered_1 0
++  sudo settings put global network_metered_2 0
++ 
++  # Performance Optimizations: CPU Governor and I/O
++  if [ -d /sys/devices/system/cpu/cpufreq ]; then
++    echo "performance" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
++  fi
++  if [ -f /sys/block/mmcblk0/queue/read_ahead_kb ]; then
++    echo "2048" | sudo tee /sys/block/mmcblk0/queue/read_ahead_kb > /dev/null
++  fi
++
+   # set success flag for current boot slot
