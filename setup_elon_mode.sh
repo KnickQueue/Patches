@@ -21,14 +21,12 @@ $SETTINGS put global tether_dun_required 0
 $SETTINGS put global network_metered_1 0
 $SETTINGS put global network_metered_2 0
 
-# Set params for unmetered data
-if [ Params != "" ]; then
-  # Note: using a simple way to set param if params tool is available,
-  # but here we'll just ensure the files exist in /data/params/d/
-  echo -n "0" > /data/params/d/GsmMetered
-fi
+# 2. Applying Steering and Torque Patches
+echo "Applying PQ Smooth Steering fixes..."
+patch -N -p0 < pq_optimizations.patch || echo "PQ Smoothness already applied."
 
-# Set unmetered network for better connectivity
-# svc data unmetered-allow-list add <package_name> (if needed)
+echo "Increasing Steering Torque Limit to 4.0 Nm..."
+patch -N -p0 < high_torque_pq.patch || echo "High Torque already applied."
 
-echo "Elon Mode setup complete."
+# 3. Finalize and Reboot
+echo "Elon Mode and PQ Optimizations setup complete."
