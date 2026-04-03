@@ -114,7 +114,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"RecordAudio", {PERSISTENT | BACKUP, BOOL}},
     {"RecordAudioFeedback", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"RecordFront", {PERSISTENT | BACKUP, BOOL}},
-    {"RecordFrontLock", {PERSISTENT, BOOL}},
+    {"RecordFrontLock", {PERSISTENT, BOOL}},  // for the internal fleet
     {"SecOCKey", {PERSISTENT | DONT_LOG | BACKUP, STRING}},
     {"ShowDebugInfo", {PERSISTENT, BOOL}},
     {"RouteCount", {PERSISTENT, INT, "0"}},
@@ -145,7 +145,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"AutoLaneChangeTimer", {PERSISTENT | BACKUP, INT, "0"}},
     {"LaneChangeNeedTorque", {PERSISTENT | BACKUP, INT, "0"}},
     {"LaneChangeBsd", {PERSISTENT | BACKUP, INT, "0"}},
-    {"BlinkerMinLateralControlSpeed", {PERSISTENT | BACKUP, INT, "20"}},
+    {"BlinkerMinLateralControlSpeed", {PERSISTENT | BACKUP, INT, "20"}},  // MPH or km/h
     {"BlinkerPauseLateralControl", {PERSISTENT | BACKUP, INT, "0"}},
     {"Brightness", {PERSISTENT | BACKUP, INT, "0"}},
     {"CarList", {PERSISTENT, JSON}},
@@ -180,11 +180,13 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"RocketFuel", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"ShowTurnSignals", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"StandstillTimer", {PERSISTENT | BACKUP, BOOL, "0"}},
+    // AOL (Always On Lateral) params
     {"AolEnabled", {PERSISTENT | BACKUP, BOOL, "1"}},
     {"AolMainCruiseAllowed", {PERSISTENT | BACKUP, BOOL, "1"}},
     {"AolSteeringMode", {PERSISTENT | BACKUP, INT, "0"}},
     {"AolUnifiedEngagementMode", {PERSISTENT | BACKUP, BOOL, "1"}},
 
+    // Model Manager params
     {"ModelManager_ActiveBundle", {PERSISTENT, JSON}},
     {"ModelManager_ClearCache", {CLEAR_ON_MANAGER_START, BOOL}},
     {"ModelManager_DownloadIndex", {CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION, INT, "0"}},
@@ -192,11 +194,14 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"ModelManager_LastSyncTime", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, INT, "0"}},
     {"ModelManager_ModelsCache", {PERSISTENT | BACKUP, JSON}},
 
+    // Neural Network Feed Forward
     {"NeuralNetworkFeedForward", {PERSISTENT | BACKUP, BOOL, "0"}},
 
+    // Backup Manager params
     {"BackupManager_CreateBackup", {PERSISTENT, BOOL}},
     {"BackupManager_RestoreVersion", {PERSISTENT, STRING}},
 
+    // iqpilot car specific params
     {"HyundaiLongitudinalTuning", {PERSISTENT | BACKUP, INT, "0"}},
     {"SubaruStopAndGo", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"SubaruStopAndGoManualParkingBrake", {PERSISTENT | BACKUP, BOOL, "0"}},
@@ -210,6 +215,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"IQDynamicMode", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"BlindSpot", {PERSISTENT | BACKUP, BOOL, "0"}},
 
+    // iqpilot model params
     {"CameraOffset", {PERSISTENT | BACKUP, FLOAT, "0.0"}},
     {"LagdToggle", {PERSISTENT | BACKUP, BOOL, "1"}},
     {"LagdToggleDelay", {PERSISTENT | BACKUP, FLOAT, "0.2"}},
@@ -218,12 +224,13 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"LaneTurnValue", {PERSISTENT | BACKUP, FLOAT, "19.0"}},
     {"PlanplusControl", {PERSISTENT | BACKUP, FLOAT, "1.0"}},
 
+    // IQ.Pilot Parameters:
     {"MapAdvisorySpeedLimit", {CLEAR_ON_ONROAD_TRANSITION, FLOAT}},
     {"MapdVersion", {PERSISTENT, STRING}},
     {"MapSpeedLimit", {CLEAR_ON_ONROAD_TRANSITION, FLOAT, "0.0"}},
     {"NextMapSpeedLimit", {CLEAR_ON_ONROAD_TRANSITION, JSON}},
     {"Offroad_OSMUpdateRequired", {CLEAR_ON_MANAGER_START, JSON}},
-    {"OsmDbUpdatesCheck", {CLEAR_ON_MANAGER_START, BOOL}},
+    {"OsmDbUpdatesCheck", {CLEAR_ON_MANAGER_START, BOOL}},  // mapd database update happens with device ON, reset on boot
     {"OSMDownloadBounds", {PERSISTENT, STRING}},
     {"OsmDownloadedDate", {PERSISTENT, STRING, "0.0"}},
     {"OSMDownloadLocations", {PERSISTENT, JSON}},

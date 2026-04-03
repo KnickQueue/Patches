@@ -8,16 +8,27 @@ Included changes:
 - VW live torque self-tune enablement
 - PQ flashed-EPS support
 - PQ longitudinal feel profiles
+- PQ low-speed cornering assist tune
 - PQ settings UI cleanup and status panel
 - Advanced lane-change tuning controls
 
-## Deploy Over SSH
+## Refresh The Bundle
 
-From any machine that can reach the device:
+Whenever we make new IQ.Pilot changes, refresh the deploy bundle first:
 
 ```bash
-git clone --single-branch --branch codex/pq-iqpilot-overlay-2026-04-02 https://github.com/KnickQueue/Patches.git
-cd Patches/iqpilot/pq_iqpilot_overlay_2026-04-02
+cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
+./sync_bundle.sh
+```
+
+`sync_bundle.sh` uses `FILES.txt` as the source of truth and rebuilds `files/` with the correct mirrored paths.
+
+## Deploy Over SSH
+
+From the machine that has this patch bundle:
+
+```bash
+cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
 ./deploy.sh comma@<device-ip> /data/openpilot
 ```
 
@@ -25,9 +36,29 @@ If your install lives somewhere else on the device, replace `/data/openpilot` wi
 
 ## What `deploy.sh` does
 
+- refreshes the local bundle from `FILES.txt`
 - copies the `files/` overlay to the device
-- applies it over the target tree with `rsync --relative`
+- applies it over the target tree with `rsync`
 - runs a quick Python syntax check on the updated Python files
+
+## Manual Deploy
+
+If you prefer to do it by hand:
+
+```bash
+./sync_bundle.sh
+scp -r files comma@<device-ip>:/tmp/pq_iqpilot_overlay_2026-04-02
+ssh comma@<device-ip> 'rsync -a /tmp/pq_iqpilot_overlay_2026-04-02/files/ /data/openpilot/'
+```
+
+## On-Device Reapply
+
+If the patch repo is already published to GitHub, the comma can reapply everything itself:
+
+```bash
+cd /data/Patches/iqpilot/pq_iqpilot_overlay_2026-04-02
+./deploy-device.sh /data/openpilot
+```
 
 ## Restart
 

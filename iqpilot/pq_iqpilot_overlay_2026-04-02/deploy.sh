@@ -11,15 +11,19 @@ REMOTE_ROOT="${2:-/data/openpilot}"
 PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REMOTE_STAGE="/tmp/pq_iqpilot_overlay_2026-04-02"
 
+"$PATCH_DIR/sync_bundle.sh"
+
 echo "Uploading overlay to ${REMOTE}:${REMOTE_STAGE}"
 ssh "$REMOTE" "rm -rf '$REMOTE_STAGE' && mkdir -p '$REMOTE_STAGE'"
 scp -r "$PATCH_DIR/files" "$REMOTE:$REMOTE_STAGE/"
 
 echo "Applying overlay into ${REMOTE_ROOT}"
-ssh "$REMOTE" "cd '$REMOTE_ROOT' && rsync -aR '$REMOTE_STAGE'/./files/ ./"
+ssh "$REMOTE" "rsync -a '$REMOTE_STAGE'/files/ '$REMOTE_ROOT'/"
 
 echo "Running syntax checks"
 ssh "$REMOTE" "cd '$REMOTE_ROOT' && python3 -m py_compile \
+  iqpilot/selfdrive/controls/lib/helpers/torque_override.py \
+  iqpilot/selfdrive/controls/lib/helpers/torque_ext.py \
   selfdrive/ui/iqpilot/layouts/settings/vehicle/brands/volkswagen.py \
   selfdrive/ui/iqpilot/layouts/settings/steering_sub_layouts/lane_change_settings.py \
   selfdrive/ui/iqpilot/layouts/settings/steering_sub_layouts/torque_settings.py \
