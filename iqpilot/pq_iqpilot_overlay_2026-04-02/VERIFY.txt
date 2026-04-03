@@ -1,6 +1,0 @@
-Expected markers after deploy:
-- selfdrive/ui/iqpilot/layouts/settings/vehicle/brands/volkswagen.py contains "PQ Active Status"
-- selfdrive/ui/layouts/settings/toggles.py contains "Elon Mode"
-- iqpilot/selfdrive/locationd/torqued_ext.py contains "'volkswagen'"
-
-If you accidentally used the old rsync command, files may have landed under /data/openpilot/files/ instead of /data/openpilot/.

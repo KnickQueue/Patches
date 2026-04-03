@@ -23,6 +23,21 @@ cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-
 
 `sync_bundle.sh` uses `FILES.txt` as the source of truth and rebuilds `files/` with the correct mirrored paths.
 
+## Publish The Bundle
+
+To refresh, copy into your local `Patches` checkout, commit, and push in one step:
+
+```bash
+cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
+./publish_bundle.sh
+```
+
+Optional custom commit message:
+
+```bash
+./publish_bundle.sh "Tune PQ low-speed corner assist"
+```
+
 ## Deploy Over SSH
 
 From the machine that has this patch bundle:
