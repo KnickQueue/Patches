@@ -123,13 +123,17 @@ class UpdaterState(IntEnum):
 
 class PairBigButton(BigButton):
   KONN3KT_ONLINE_NS = 80_000_000_000  # 80 seconds in nanoseconds
+  EPOCH_NS_CUTOFF = 1_000_000_000_000_000
 
   def __init__(self):
     super().__init__("pair", "Pair in App", "icons_mici/settings/konn3kt_icon.png", icon_size=(33, 60))
 
   def _is_konn3kt_online(self) -> bool:
     last_ping = ui_state.sm['deviceState'].lastAthenaPingTime
-    return last_ping != 0 and (time.time_ns() - last_ping) < self.KONN3KT_ONLINE_NS
+    if last_ping == 0:
+      return False
+    now_ns = time.time_ns() if last_ping >= self.EPOCH_NS_CUTOFF else time.monotonic_ns()
+    return (now_ns - last_ping) < self.KONN3KT_ONLINE_NS
 
   def _update_state(self):
     if ui_state.prime_state.is_paired():

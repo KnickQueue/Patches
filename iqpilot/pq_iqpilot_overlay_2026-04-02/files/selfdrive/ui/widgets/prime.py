@@ -19,6 +19,7 @@ class PrimeWidget(Widget):
   PRIME_BG_COLOR = rl.Color(51, 51, 51, 255)
   KONN3KT_ONLINE_NS = 80_000_000_000  # 80 seconds in nanoseconds
   TRIPS_PARAM_KEY = "ApiCache_DriveStats"
+  EPOCH_NS_CUTOFF = 1_000_000_000_000_000
 
   def __init__(self):
     super().__init__()
@@ -35,7 +36,10 @@ class PrimeWidget(Widget):
 
   def _is_konn3kt_online(self) -> bool:
     last_ping = ui_state.sm['deviceState'].lastAthenaPingTime
-    return last_ping != 0 and (time.time_ns() - last_ping) < self.KONN3KT_ONLINE_NS
+    if last_ping == 0:
+      return False
+    now_ns = time.time_ns() if last_ping >= self.EPOCH_NS_CUTOFF else time.monotonic_ns()
+    return (now_ns - last_ping) < self.KONN3KT_ONLINE_NS
 
   def _render_for_unpaired_users(self, rect: rl.Rectangle):
     """Renders the pairing prompt for unpaired users."""

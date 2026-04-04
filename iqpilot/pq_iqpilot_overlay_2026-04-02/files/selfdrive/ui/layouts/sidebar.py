@@ -63,6 +63,9 @@ class MetricData:
 
 
 class Sidebar(Widget):
+  KONN3KT_ONLINE_NS = 80_000_000_000
+  EPOCH_NS_CUTOFF = 1_000_000_000_000_000
+
   def __init__(self):
     Widget.__init__(self)
     self._net_type = NETWORK_TYPES.get(NetworkType.none)
@@ -133,10 +136,12 @@ class Sidebar(Widget):
     last_ping = device_state.lastAthenaPingTime
     if last_ping == 0:
       self._connect_status.update(tr_noop("Konn3kt"), tr_noop("OFFLINE"), Colors.WARNING)
-    elif time.time_ns() - last_ping < 80_000_000_000:  # 80 seconds in nanoseconds
-      self._connect_status.update(tr_noop("Konn3kt"), tr_noop("ONLINE"), Colors.GOOD)
     else:
-      self._connect_status.update(tr_noop("Konn3kt"), tr_noop("ERROR"), Colors.DANGER)
+      now_ns = time.time_ns() if last_ping >= self.EPOCH_NS_CUTOFF else time.monotonic_ns()
+      if now_ns - last_ping < self.KONN3KT_ONLINE_NS:
+        self._connect_status.update(tr_noop("Konn3kt"), tr_noop("ONLINE"), Colors.GOOD)
+      else:
+        self._connect_status.update(tr_noop("Konn3kt"), tr_noop("ERROR"), Colors.DANGER)
 
   def _update_panda_status(self):
     if ui_state.panda_type == log.PandaState.PandaType.unknown:
