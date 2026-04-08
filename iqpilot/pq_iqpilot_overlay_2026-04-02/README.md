@@ -12,12 +12,15 @@ Included changes:
 - PQ settings UI cleanup and status panel
 - Advanced lane-change tuning controls
 
+Notes:
+- The newer build already includes the `onPolicy` model-type support upstream, so that older compatibility patch is intentionally no longer bundled here.
+
 ## Refresh The Bundle
 
 Whenever we make new IQ.Pilot changes, refresh the deploy bundle first:
 
 ```bash
-cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
+cd /Users/nicholasquandt/Documents/Dev/Patches/iqpilot/pq_iqpilot_overlay_2026-04-02
 ./sync_bundle.sh
 ```
 
@@ -28,7 +31,7 @@ cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-
 To refresh, copy into your local `Patches` checkout, commit, and push in one step:
 
 ```bash
-cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
+cd /Users/nicholasquandt/Documents/Dev/Patches/iqpilot/pq_iqpilot_overlay_2026-04-02
 ./publish_bundle.sh
 ```
 
@@ -43,7 +46,7 @@ Optional custom commit message:
 From the machine that has this patch bundle:
 
 ```bash
-cd /Users/nicholasquandt/Documents/Dev/iq.pilot/patches/pq_iqpilot_overlay_2026-04-02
+cd /Users/nicholasquandt/Documents/Dev/Patches/iqpilot/pq_iqpilot_overlay_2026-04-02
 ./deploy.sh comma@<device-ip> /data/openpilot
 ```
 

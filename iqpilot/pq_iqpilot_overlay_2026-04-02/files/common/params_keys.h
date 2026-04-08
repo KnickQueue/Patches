@@ -71,6 +71,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"JoystickDebugMode", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, BOOL}},
     {"JoystickAolRequest", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, STRING}},
     {"Konn3ktSshKeys", {PERSISTENT, STRING}},
+    {"Konn3ktBleTransportEnabled", {PERSISTENT, BOOL, "1"}},
     {"LanguageSetting", {PERSISTENT | BACKUP, STRING, "en"}},
     {"LastAthenaPingTime", {CLEAR_ON_MANAGER_START, INT}},
     {"LastGPSPosition", {PERSISTENT, STRING}},
@@ -213,6 +214,15 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"VolkswagenPqLongitudinalProfile", {PERSISTENT | BACKUP, INT, "1"}},
 
     {"IQDynamicMode", {PERSISTENT | BACKUP, BOOL, "0"}},
+    {"IQDynamicConditionalCurves", {PERSISTENT | BACKUP, BOOL, "1"}},
+    {"IQDynamicConditionalSlowerLead", {PERSISTENT | BACKUP, BOOL, "1"}},
+    {"IQDynamicConditionalStoppedLead", {PERSISTENT | BACKUP, BOOL, "1"}},
+    {"IQDynamicConditionalModelStops", {PERSISTENT | BACKUP, BOOL, "1"}},
+    {"IQDynamicConditionalSLCFallback", {PERSISTENT | BACKUP, BOOL, "1"}},
+    {"IQDynamicConditionalSpeed", {PERSISTENT | BACKUP, FLOAT, "18.0"}},
+    {"IQDynamicConditionalLeadSpeed", {PERSISTENT | BACKUP, FLOAT, "24.0"}},
+    {"IQDynamicModelStopTime", {PERSISTENT | BACKUP, FLOAT, "3.0"}},
+    {"IQForceStops", {PERSISTENT | BACKUP, BOOL, "1"}},
     {"BlindSpot", {PERSISTENT | BACKUP, BOOL, "0"}},
 
     // iqpilot model params

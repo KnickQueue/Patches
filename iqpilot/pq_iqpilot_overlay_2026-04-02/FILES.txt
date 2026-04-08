@@ -1,15 +1,9 @@
 common/params_keys.h
-cereal/custom.capnp
 iqpilot/selfdrive/locationd/torqued_ext.py
-iqpilot/models/runners/constants.py
-iqpilot/models/runners/helpers.py
-iqpilot/models/runners/tinygrad/model_types.py
-iqpilot/models/runners/tinygrad/tinygrad_runner.py
 iqpilot/selfdrive/controls/lib/helpers/torque_ext.py
 iqpilot/selfdrive/controls/lib/helpers/torque_override.py
 opendbc_repo/opendbc/car/volkswagen/interface.py
 opendbc_repo/opendbc/car/volkswagen/carcontroller.py
-selfdrive/ui/iqpilot/layouts/settings/models.py
 selfdrive/ui/iqpilot/layouts/settings/vehicle/brands/volkswagen.py
 selfdrive/ui/iqpilot/layouts/settings/steering_sub_layouts/lane_change_settings.py
 selfdrive/ui/iqpilot/layouts/settings/steering_sub_layouts/torque_settings.py

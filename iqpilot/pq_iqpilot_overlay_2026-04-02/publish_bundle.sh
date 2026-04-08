@@ -2,10 +2,8 @@
 set -euo pipefail
 
 PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$PATCH_DIR/../.." && pwd)"
-PATCHES_REPO="${PATCHES_REPO:-$HOME/Documents/Dev/Patches}"
+PATCHES_REPO="$(cd "$PATCH_DIR/../.." && pwd)"
 PATCHES_BRANCH="${PATCHES_BRANCH:-codex/pq-iqpilot-overlay-2026-04-02}"
-TARGET_DIR="$PATCHES_REPO/iqpilot/pq_iqpilot_overlay_2026-04-02"
 COMMIT_MSG="${1:-Refresh PQ IQ Pilot overlay bundle}"
 
 "$PATCH_DIR/sync_bundle.sh"
@@ -22,9 +20,6 @@ if [[ "$current_branch" != "$PATCHES_BRANCH" ]]; then
   echo "Expected branch $PATCHES_BRANCH, found $current_branch" >&2
   exit 1
 fi
-
-mkdir -p "$TARGET_DIR"
-rsync -a --delete "$PATCH_DIR/" "$TARGET_DIR/"
 
 git -C "$PATCHES_REPO" add iqpilot/pq_iqpilot_overlay_2026-04-02
 
